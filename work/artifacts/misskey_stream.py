@@ -4,6 +4,7 @@ import os
 import sys
 import websockets
 import re
+import traceback
 from datetime import datetime
 
 import use_translate
@@ -31,11 +32,13 @@ def process_message( text, note_id ):
     if enc is None:
         return
 
+    print( "enc", enc )
+
     encTxt = enc[ "result" ]
 
     # 現在日時を取得
-    now = datetime.now()
-    output_file = now.strftime("%Y-%m-%d_%H-%M-%S-output.mp3")
+    output_file = "output.mp3"
+    
     use_text2speech.synthesize_text_with_voice_type(
         encTxt, output_file,
         language_code = "en-US",
@@ -43,14 +46,17 @@ def process_message( text, note_id ):
         speed = 0.75 )
 
     word_desc = ""
-    for info in enc[ "word-list" ]:
-        for item in info.items():
-            word_desc += "%s:%s\n" %(item["word"], item["mean"])
+    for item in enc[ "word-list" ]:
+        word_desc += "%s: %s\n" %(item["word"], item["mean"])
     if word_desc != "":
-        encTxt += "\n-----\n" + word_desc
+        encTxt += "\n-----\n"
+        encTxt += word_desc
+
+    now = datetime.now()
+    gen_file = now.strftime("%Y-%m-%d_%H-%M-%S-" + output_file )
 
     use_misskey_send.upload_and_post(
-        host, token, encTxt, output_file, note_id )
+        host, token, encTxt, output_file, gen_file, note_id )
     
 
 async def process_note( note, target_user ):
@@ -105,7 +111,9 @@ async def stream():
                             note = body.get("body", {})
                             await process_note( note, target_user )
         except Exception as e:
-            print(f"Error: {e}. Reconnecting in 5 minuts...", file=sys.stderr)
+            print(f"Error: Reconnecting in 5 minuts...", file=sys.stderr)
+            traceback.print_exc()
+
             await asyncio.sleep( 5 * 60 )
 
 def run():

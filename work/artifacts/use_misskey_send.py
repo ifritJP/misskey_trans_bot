@@ -2,14 +2,15 @@ import requests
 import os
 
 
-def upload_and_post(instance_url, token, text, file_path, reply_id):
+def upload_and_post(instance_url, token, text, file_path, gen_path, reply_id):
     # --- Step 1: ファイルをアップロード ---
     upload_url = f"https://{instance_url}/api/drive/files/create"
     
     with open(file_path, "rb") as f:
         # ドライブへのアップロードは multipart/form-data 形式
+
         files = {
-            "file": (file_path, f)
+            "file": (gen_path, f)
         }
         # トークンもフォームデータとして送信
         payload = {

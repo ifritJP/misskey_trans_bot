@@ -20,13 +20,14 @@ run:
 		TARGET_USER=$(TARGET_USER)		\
 		GCP_API_KEY=$(GCP_API_KEY)		\
 		GEMINI_API_KEY=$(GEMINI_API_KEY)	\
-		uv run main.py
+		uv run main.py > dump.log 2>&1
 
 
 
 ifneq ($(filter get_token,$(MAKECMDGOALS)),)
 UUID:=$(shell uuid -v 4)
 endif
+
 #PERMISSION=read:messaging,write:messaging,write:chat,read:chat,write:notes
 
 #PERMISSION=write:messaging,write:chat,write:notes,read:account,read:blocks,read:drive,read:favorites,read:following,read:messaging,read:mutes,read:notifications,read:reactions,read:pages,read:page-likes,read:user-groups,read:channels,read:gallery,read:gallery-likes,read:flash,read:flash-likes,read:invite-codes,read:clip-favorite,read:federation,read:chat
