@@ -1,0 +1,13 @@
+[project]
+name = "misskey"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-api-python-client>=2.187.0",
+    "google-cloud-texttospeech>=2.33.0",
+    "google-cloud-translate>=3.23.0",
+    "google-genai>=1.56.0",
+    "websockets>=15.0.1",
+]
