@@ -6,6 +6,7 @@ import os
 import io
 import re
 import json
+import random
 
 from google import genai
 from google.genai import types
@@ -14,7 +15,7 @@ from google.genai import types
 def generate(txt):
 
     prompt = """
-次の日本語を英語に翻訳してください。
+末尾に添付した日本語を英語に翻訳してください。
 出来るだけシンプルな文法を使って翻訳してください。
 レスポンスは次の JSON 形式で返してください。
 Markdown は使わずに application/json 形式にしてください。
@@ -23,8 +24,8 @@ Markdown は使わずに application/json 形式にしてください。
    "word-list": [ { "word": "", "mean": "" } ],
 }
 中学生レベルで難しい単語がある場合は、単語と意味のリスト(word-list)を追加してください。
-単語は英単語を入れてください。
-意味は翻訳元の文の語から拾ってください。
+word の値には、英単語を入れてください。
+mean の値には、翻訳元の文の日本語訳の何に対応するのかを簡潔に説明してください。
 -----
 """
     prompt += txt
@@ -34,9 +35,23 @@ Markdown は使わずに application/json 形式にしてください。
         client = genai.Client(
             api_key=os.environ.get("GEMINI_API_KEY"),
         )
-    
-        #model = "gemini-2.5-flash"
-        model = "gemini-2.5-flash-lite"
+
+        # 使用するモデルの定義。
+        # 上限にならないようにランダムで利用するモデルを変更する。 
+        # 高精度モデルの比率を挙げるために、定義数を上げる。
+        # 本来はリスエスト回数をカウントして越えないように調整した方が良いが
+        # 面倒なのでランダムで分散させる。
+        # 現状 1 日に 20 回制限なので、普通に考えて 20 回は使わないはず
+        model_list =[
+            "gemini-2.5-flash",
+            "gemini-2.5-flash",
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+        ]
+        model = model_list[ random.randint(0,len( model_list ) - 1 ) ]
+        print( model )
+        
+        
         contents = [
             types.Content(
                 role="user",

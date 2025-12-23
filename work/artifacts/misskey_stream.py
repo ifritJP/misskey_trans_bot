@@ -53,7 +53,7 @@ def process_message( text, note_id ):
         encTxt += word_desc
 
     now = datetime.now()
-    gen_file = now.strftime("%Y-%m-%d_%H-%M-%S-" + output_file )
+    gen_file = now.strftime("%Y/%m/%Y_%m_%d_%H-%M-%S-" + output_file )
 
     use_misskey_send.upload_and_post(
         host, token, encTxt, output_file, gen_file, note_id )
