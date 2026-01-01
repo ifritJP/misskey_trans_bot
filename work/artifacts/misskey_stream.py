@@ -57,6 +57,11 @@ def process_message( text, note_id ):
 
     use_misskey_send.upload_and_post(
         host, token, encTxt, output_file, gen_file, note_id )
+
+    comment = enc.get( "comment" )
+    if not comment is None:
+        comment = "by %s\n----\n%s" %(enc[ "model" ], comment )
+        use_misskey_send.post( host, token, comment, note_id, None )
     
 
 async def process_note( note, target_user ):

@@ -172,6 +172,32 @@ def upload_with_folderId( instance_url, token, file_path, gen_name, folderId ):
 
     return file_id
 
+def post(instance_url, token, text, reply_id, file_id_list ):
+    
+    # --- Step 2: ノートを投稿 ---
+    post_url = f"https://{instance_url}/api/notes/create"
+    
+    post_data = {
+        "i": token,
+        "replyId": reply_id,
+        "text": text,
+    }
+
+    if not file_id_list is None:
+        post_data[ "fileIds" ] = file_id_list
+
+
+    response = requests.post(post_url, json=post_data)
+    
+    if response.status_code == 200:
+        print("投稿成功！")
+        return response.json()
+    else:
+        print("投稿失敗")
+        return None
+
+
+
 # file_path のファイルをアップロードして、 text の内容をポストする。
 # どうやら、同じ内容のファイルをアップロードすると、
 # gen_path に何を指定しても、同じ内容のファイルとしてアップロードされるらしい
@@ -180,24 +206,13 @@ def upload_and_post(instance_url, token, text, file_path, gen_path, reply_id):
     # --- Step 1: ファイルをアップロード ---
     file_id = upload( instance_url, token, file_path, gen_path )
 
-    # --- Step 2: ノートを投稿 ---
-    post_url = f"https://{instance_url}/api/notes/create"
-    
-    post_data = {
-        "i": token,
-        "replyId": reply_id,
-        "text": text,
-        "fileIds": [file_id] # 配列で渡す（複数可）
-    }
-
-    response = requests.post(post_url, json=post_data)
-    
-    if response.status_code == 200:
-        print("添付付き投稿成功！")
-        return response.json()
+    if file_id is None:
+        file_id_list = None
     else:
-        print("投稿失敗")
-        return None
+        file_id_list = [ file_id ]
+
+    return post( instance_url, token, text, reply_id, file_id_list )
+
 
 def test():
 

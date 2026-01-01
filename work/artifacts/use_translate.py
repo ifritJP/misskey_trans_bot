@@ -23,7 +23,9 @@ def translate_text(text):
     if response.status_code == 200:
         result = response.json()
         text = result["data"]["translations"][0]["translatedText"]
-        return { "result": html.unescape( text ), "word-list":[] }
+        jsonObj = { "result": html.unescape( text ), "word-list":[] }
+        jsonObj[ "model" ] = "gcp-translate-v2"
+        return jsonObj
     else:
         print({response.status_code}, {response.text})
         return None

@@ -22,10 +22,12 @@ Markdown は使わずに application/json 形式にしてください。
 {
    "result": "ここに翻訳後の結果を入れる",
    "word-list": [ { "word": "", "mean": "" } ],
+   "comment": "ここに添付した日本後の内容に対するコメントを入れる",
 }
 中学生レベルで難しい単語がある場合は、単語と意味のリスト(word-list)を追加してください。
 word の値には、英単語を入れてください。
 mean の値には、翻訳元の文の日本語訳の何に対応するのかを簡潔に説明してください。
+comment の値には、添付した日本語の内容に関して、ファクトチェック、妥当性、議論の展開など様々な観点のコメントを日本語で入れてください。長さは最大でも 2000 文字程度にしてください。
 -----
 """
     prompt += txt
@@ -43,6 +45,7 @@ mean の値には、翻訳元の文の日本語訳の何に対応するのかを
         # 面倒なのでランダムで分散させる。
         # 現状 1 日に 20 回制限なので、普通に考えて 20 回は使わないはず
         model_list =[
+            #"gemini-3-flash",
             "gemini-2.5-flash",
             "gemini-2.5-flash",
             "gemini-2.5-flash",
@@ -81,7 +84,13 @@ mean の値には、翻訳元の文の日本語訳の何に対応するのかを
             result.write( chunk.text )
         ans = result.getvalue()
         jsonTxt = re.sub( r"```.*", "", ans )
-        return json.loads( jsonTxt )
+
+        jsonObj = json.loads( jsonTxt )
+        comment = jsonObj[ "comment" ]
+        if len( comment ) > 2800:
+            jsonObj[ "comment" ] = comment[ :2800 ] + "..."
+        jsonObj["model"] = model
+        return jsonObj
     
     except Exception as e:
         print(f"Error: {e}" )
