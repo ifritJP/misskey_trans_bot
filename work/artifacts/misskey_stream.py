@@ -11,6 +11,7 @@ import use_translate
 import use_text2speech
 import use_gemini
 import use_misskey_send
+import use_misskey_get
 
 
 host = os.environ.get("MISSKEY_HOST")
@@ -23,10 +24,13 @@ if not host:
 
 
 def process_message( text, note_id ):
-    enc = use_gemini.generate( text )
+    striped_text = re.sub( "http[^\n]+", "", text )
+    link_list = re.findall( r"http[^\n]+", text )
+    
+    enc = use_gemini.generate( striped_text, link_list )
     if enc is None:
         print( "gemini is None" )
-        enc = use_translate.translate_text( text )
+        enc = use_translate.translate_text( striped_text )
         print ( enc )
 
     if enc is None:
@@ -80,7 +84,6 @@ async def process_note( note, target_user ):
         print(f"[{local_time}] {note_id} @{user}: {text}")
         sys.stdout.flush()
         if user == target_user:
-            text = re.sub( "http[^\n]+", "", text )
             process_message( text, note_id )
 
 async def stream():
@@ -93,6 +96,13 @@ async def stream():
 
     while True:
         try:
+            # 直前の投稿を取得して処理する
+            last_note = use_misskey_get.get_local_timeline( token, host )
+            if last_note:
+                await process_note( last_note, target_user )
+                    
+
+            # ストリーミング API で接続する
             async with websockets.connect(url) as ws:
                 print(f"Connected to {host}", file=sys.stderr)
 
