@@ -38,8 +38,8 @@ comment の値には、添付した日本語の内容に関するファクトチ
 リンク先の内容にも考慮に入れて言及してください。
 """
         prompt += "\n".join( link_list )
-        prompt += "\n---\n"
-    
+
+    prompt += "\n---\n"
     prompt += txt
     
     
