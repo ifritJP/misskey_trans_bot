@@ -24,20 +24,22 @@ Markdown は使わずに application/json 形式にしてください。
    "word-list": [ { "word": "", "mean": "" } ],
    "comment": "ここに添付した日本後の内容に対するコメントを入れる",
 }
-中学生レベルで難しい単語がある場合は、単語と意味のリスト(word-list)を追加してください。
+翻訳した英文に中学生レベルで難しい単語がある場合は、単語と意味のリスト(word-list)を追加してください。
 word の値には、英単語を入れてください。
 mean の値には、翻訳元の文の日本語訳の何に対応するのかを簡潔に説明してください。
-comment の値には、添付した日本語の内容に関するファクトチェック。
-さらに、その内容の専門家としての様々な観点(肯定、批評等)のコメントを日本語で入れてください。
-長さは JSON 全体で最大でも 2000 文字程度にしてください。
+comment の値には、添付した日本語の内容に関するファクトチェック、
+さらに、その内容の専門家としての様々な観点(肯定、批評、議論の深掘り等)のコメントを日本語で入れてください。
+長さは JSON 全体で最大でも 2300 文字程度にしてください。
 """
     # リンクがある場合はリンクについてのコメントも追加
+    link_comment = ""
     if len( link_list ) > 0:
         prompt += """
 なお、添付した日本語は次の URL のリンク先の内容に関するコメントです。
 リンク先の内容にも考慮に入れて言及してください。
-"""
+        """
         prompt += "\n".join( link_list )
+        link_comment = "link count:%d" %( len( link_list ) )
 
     prompt += "\n---\n"
     prompt += txt
@@ -99,6 +101,8 @@ comment の値には、添付した日本語の内容に関するファクトチ
         comment = jsonObj[ "comment" ]
         if len( comment ) > 2800:
             jsonObj[ "comment" ] = comment[ :2800 ] + "..."
+        jsonObj[ "comment" ] = "%s\n%s" %(link_comment,
+                                          jsonObj[ "comment" ])
         jsonObj["model"] = model
         return jsonObj
     
