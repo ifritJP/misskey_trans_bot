@@ -11,9 +11,7 @@ import random
 from google import genai
 from google.genai import types
 
-
-def generate(txt, link_list):
-
+def create_prompt( txt, link_list ):
     prompt = """
 末尾に添付した日本語を英語に翻訳してください。
 出来るだけシンプルな文法を使って翻訳してください。
@@ -43,13 +41,69 @@ comment の値には、添付した日本語の内容に関するファクトチ
 
     prompt += "\n---\n"
     prompt += txt
+
+    return prompt, link_comment
+
+
+def generate_direct( model, txt, link_list ):
+
+    prompt, link_comment = create_prompt( txt, link_list )
+
+    
+    client = genai.Client(
+        api_key=os.environ.get("GEMINI_API_KEY"),
+    )
+    
+    contents = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=prompt),
+            ],
+        ),
+    ]
+    tools = [
+        types.Tool(googleSearch=types.GoogleSearch()),
+    ]
+    generate_content_config = types.GenerateContentConfig(
+        thinking_config=types.ThinkingConfig(
+            thinking_budget=-1,
+        ),
+        tools=tools,
+    )
+
+    result = io.StringIO()
+
+    args = {
+        "model": model,
+        "contents": contents,
+    }
+
+    # if model == "gemini-2.5-flash" or model == "gemini-2.5-flash-lite":
+    #     args[ "config" ] = generate_content_config
+    
+    # for chunk in client.models.generate_content_stream( **args ):
+    #     result.write( chunk.text )
+
+    response = client.models.generate_content( **args )
+    result.write( response.text )
+    
+    ans = result.getvalue()
+    jsonTxt = re.sub( r"```.*", "", ans )
+    jsonObj = json.loads( jsonTxt )
+    comment = jsonObj[ "comment" ]
+    if len( comment ) > 2800:
+        jsonObj[ "comment" ] = comment[ :2800 ] + "..."
+    jsonObj[ "comment" ] = "%s\n%s" %(link_comment,
+                                      jsonObj[ "comment" ])
+    jsonObj["model"] = model
+    return jsonObj
+    
+
+def generate(txt, link_list):
     
     
     try:
-        client = genai.Client(
-            api_key=os.environ.get("GEMINI_API_KEY"),
-        )
-
         # 使用するモデルの定義。
         # 上限にならないようにランダムで利用するモデルを変更する。 
         # 高精度モデルの比率を挙げるために、定義数を上げる。
@@ -59,57 +113,37 @@ comment の値には、添付した日本語の内容に関するファクトチ
         model_list =[
             #"gemini-3-flash",
             "gemini-2.5-flash",
-            "gemini-2.5-flash",
-            "gemini-2.5-flash",
-            "gemini-2.5-flash-lite",
+            "gemma-4-26b-a4b-it",
+            "gemma-4-26b-a4b-it",
+            "gemma-4-31b-it",
+            "gemma-4-31b-it",
+            "gemma-4-31b-it",
+            "gemma-4-31b-it",
+            "gemma-4-31b-it",
+            # "gemini-2.5-flash-lite",
         ]
         model = model_list[ random.randint(0,len( model_list ) - 1 ) ]
         print( model )
-        
-        
-        contents = [
-            types.Content(
-                role="user",
-                parts=[
-                    types.Part.from_text(text=prompt),
-                ],
-            ),
-        ]
-        tools = [
-            types.Tool(googleSearch=types.GoogleSearch(
-            )),
-        ]
-        generate_content_config = types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(
-                thinking_budget=-1,
-            ),
-            tools=tools,
-        )
-    
-        result = io.StringIO()
-        
-        for chunk in client.models.generate_content_stream(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
-        ):
-            result.write( chunk.text )
-        ans = result.getvalue()
-        jsonTxt = re.sub( r"```.*", "", ans )
 
-        jsonObj = json.loads( jsonTxt )
-        comment = jsonObj[ "comment" ]
-        if len( comment ) > 2800:
-            jsonObj[ "comment" ] = comment[ :2800 ] + "..."
-        jsonObj[ "comment" ] = "%s\n%s" %(link_comment,
-                                          jsonObj[ "comment" ])
-        jsonObj["model"] = model
-        return jsonObj
+        return generate_direct( model, txt, link_list )
     
     except Exception as e:
         print(f"Error: {e}" )
         return None
 
-if __name__ == "__main__":
-    print( generate( "本日発表された消費者物価指数についてお報せします。" ) )
+def test():
 
+    client = genai.Client(
+        api_key=os.environ.get("GEMINI_API_KEY"),
+    )
+    
+    for model in client.models.list():
+        print(model.name, model.supported_actions)    
+    
+    print( generate_direct(
+        #"gemma-4-26b-a4b-it",
+        "gemma-4-31b-it",
+        # "gemini-2.5-pro",
+        #"gemini-2.5-flash-lite",
+        #"gemini-3-flash-preview",
+        "本日発表された消費者物価指数についてお報せします。", [] ) )
